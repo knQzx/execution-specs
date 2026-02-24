@@ -378,13 +378,7 @@ def calculate_intrinsic_cost(tx: Transaction) -> Uint:
     This function takes a transaction as a parameter and returns the intrinsic
     gas cost of the transaction.
     """
-    data_cost = Uint(0)
-
-    for byte in tx.data:
-        if byte == 0:
-            data_cost += TX_DATA_COST_PER_ZERO
-        else:
-            data_cost += TX_DATA_COST_PER_NON_ZERO
+    data_cost = count_gas_in_data(tx.data)
 
     if tx.to == Bytes0(b""):
         create_cost = TX_CREATE_COST
@@ -400,6 +394,20 @@ def calculate_intrinsic_cost(tx: Transaction) -> Uint:
             )
 
     return TX_BASE_COST + data_cost + create_cost + access_list_cost
+
+
+def count_gas_in_data(data: bytes) -> Uint:
+    """
+    Count the calldata gas in arbitrary input bytes.
+    """
+    gas_cost = Uint(0)
+    for byte in data:
+        if byte == 0:
+            gas_cost += TX_DATA_COST_PER_ZERO
+        else:
+            gas_cost += TX_DATA_COST_PER_NON_ZERO
+
+    return gas_cost
 
 
 def recover_sender(chain_id: U64, tx: Transaction) -> Address:
